@@ -1,0 +1,141 @@
+.card-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #4a90e2;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-right: 0.75rem;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.streak-badge {
+  background-color: #fff3e0;
+  color: #ff6d00;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  margin-left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.activity-badge {
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.photo-container {
+  width: 100%;
+}
+
+.check-in-photo {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.note-text {
+  padding: 1rem;
+  margin: 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #f0f0f0;
+  color: #757575;
+  font-size: 0.875rem;
+}
+
+.time-stamp {
+  color: #757575;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.like-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.like-button.liked {
+  color: #e53935;
+}
+
+.like-button:hover {
+  color: #e53935;
+}
+
+.share-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.share-button:hover {
+  color: #4a90e2;
+}
+
+.error-text {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.photo-indicator {
+  display: inline-flex;
+  align-items: center;
+  color: #4a90e2;
+  font-size: 0.85rem;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(74, 144, 226, 0.1);
+  border-radius: 4px;
+}
+
+.dark-mode .photo-indicator {
+  background: rgba(74, 144, 226, 0.2);
+} 

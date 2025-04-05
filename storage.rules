@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Default rule - authenticated users can read and write
+    match /{allPaths=**} {
+      allow read; // Allow all users to read
+      allow write: if request.auth != null; // Only authenticated users can write
+    }
+    
+    // Allow public access to necessary folders
+    match /check-ins/{allPaths=**} {
+      allow read; // Anyone can read check-in photos
+      allow write: if request.auth != null; // Only authenticated users can upload
+    }
+    
+    match /check-in-photos/{allPaths=**} {
+      allow read; // Anyone can read check-in photos
+      allow write: if request.auth != null; // Only authenticated users can upload
+    }
+    
+    // User profile images
+    match /profile_images/{userId} {
+      allow read; // Anyone can see profile images
+      allow write: if request.auth != null && request.auth.uid == userId; // Only the user can update their profile image
+    }
+    
+    // Allow users to upload to their own folders
+    match /users/{userId}/{allPaths=**} {
+      allow read;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow users to upload check-in photos
+    match /photos/{photoId} {
+      allow read;
+      allow write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read public images
+    match /public/{imageId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only admin can write to public
+    }
+    
+    // User profile photos
+    match /users/{userId}/profile/{imageId} {
+      allow read: if request.auth != null; // Anyone can see profile pics
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // User check-ins with photos
+    match /users/{userId}/check-ins/{checkInId} {
+      allow read;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // User stories
+    match /users/{userId}/stories/{imageId} {
+      allow read: if request.auth != null; // All authenticated users can view
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      // Auto delete after 24 hours
+      // Note: This is metadata, not actually enforced by rules
+      option expires {
+        return resource.metadata.timestamp + duration.value(24, 'h');
+      }
+    }
+    
+    // Photos directory
+    match /photos/{imageId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Feed images
+    match /feed/{imageId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+} 

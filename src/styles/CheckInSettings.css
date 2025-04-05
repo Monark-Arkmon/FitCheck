@@ -1,0 +1,123 @@
+.back-button {
+  padding: 8px 16px;
+}
+
+.notification-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(106, 106, 227, 0.05);
+  border-radius: 12px;
+  margin-bottom: 25px;
+}
+
+.dark-mode .notification-toggle {
+  background: rgba(106, 106, 227, 0.1);
+}
+
+.notification-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  font-size: 24px;
+}
+
+.icon.active {
+  color: #4CAF50;
+}
+
+.icon.inactive {
+  color: #757575;
+}
+
+.dark-mode .icon.inactive {
+  color: #bdc3c7;
+}
+
+.form-section {
+  margin-bottom: 30px;
+}
+
+.subsection-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.dark-mode .subsection-title {
+  color: #e0e8ff;
+}
+
+.days-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.day-button {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #dcdfe6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  background: transparent;
+  color: #7f8c8d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.day-button:hover {
+  border-color: #6A6AE3;
+  color: #6A6AE3;
+}
+
+.day-button.selected {
+  background: #6A6AE3;
+  border-color: #6A6AE3;
+  color: white;
+}
+
+.dark-mode .day-button {
+  border-color: #34495e;
+  color: #bdc3c7;
+}
+
+.dark-mode .day-button:hover {
+  border-color: #6A6AE3;
+  color: #e0e8ff;
+}
+
+.input-help {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-top: 6px;
+}
+
+.dark-mode .input-help {
+  color: #bdc3c7;
+}
+
+.time-input {
+  cursor: pointer;
+}
+
+.select-input {
+  cursor: pointer;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+} 

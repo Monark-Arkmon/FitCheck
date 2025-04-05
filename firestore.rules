@@ -1,0 +1,146 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Add rules for the root-level checkIns collection
+    match /checkIns/{checkInId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Stories collection
+    match /stories/{storyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Feed collection
+    match /feed/{feedId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      
+      // Very permissive update rule that allows any authenticated user to update a feed document
+      // WARNING: This is for debugging purposes and should be replaced with a more restrictive rule later
+      allow update: if isAuthenticated();
+      
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Likes subcollection
+      match /likes/{likeId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && likeId == request.auth.uid;
+      }
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isOwner(userId);
+      
+      // User's private data subcollection
+      match /private/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // User's Check-ins Subcollection
+      match /checkIns/{checkInId} {
+        allow read: if true;  // Allow anyone to read check-ins
+        allow create: if request.auth != null;  // Allow authenticated users to create check-ins
+        allow update, delete: if request.auth != null && 
+          (resource.data.userId == request.auth.uid);  // Allow users to modify only their own check-ins
+      }
+      
+      // User's Stories Subcollection
+      match /stories/{storyId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's Settings Subcollection
+      match /settings/{settingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's Notification Settings
+      match /notificationSettings/{settingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User fitness stats rules
+      match /fitnessStats/{document=**} {
+        allow read: if true;
+        allow write: if request.auth != null && 
+          request.auth.uid == userId;  // Allow users to update only their own fitness stats
+      }
+    }
+    
+    // Posts collection
+    match /posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Post likes collection
+    match /postLikes/{likeId} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isAuthenticated() && likeId.split('_')[0] == request.auth.uid;
+    }
+    
+    // Post comments collection
+    match /postComments/{commentId} {
+      allow read: if isAuthenticated();
+      // Allow any authenticated user to create comments
+      allow create: if isAuthenticated();
+      // Only allow modification/deletion by comment author
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Fitness activities
+    match /activities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Metadata collection (for app settings, tags, etc.)
+    match /metadata/{docId} {
+      allow read: if true; // Allow read access to everyone
+      // Only allow write access for admin users (you'd need to implement admin role check)
+      allow write: if false;
+    }
+    
+    // Tags for filtering
+    match /tags/{tagId} {
+      allow read: if true; // Allow read access to everyone
+      // Only admins can create/update tags
+      allow write: if false;
+    }
+    
+    // Follow relationships
+    match /follows/{followId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.followerId == request.auth.uid;
+    }
+    
+    // Allow admin access for development (you may want to remove this in production)
+    match /{document=**} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.email == 'your-admin-email@example.com';  // Replace with your admin email
+    }
+  }
+} 
