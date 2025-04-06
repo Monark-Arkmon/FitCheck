@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { getFeedItems, getTrendingUsers, togglePostLike, hasUserLikedPost } from '../services/socialService';
-import { getAvailableTags } from '../services/fitnessService';
+import { getAvailableTags, getUserProfileImage } from '../services/fitnessService';
 import CommentSection from '../components/social/CommentSection';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -55,14 +55,27 @@ const Feed = () => {
   const [tagError, setTagError] = useState('');
   
   // Define fetchFeedData function
-  const fetchFeedData = async () => {
+  const fetchFeedData = async (forceRefresh = false) => {
     try {
       setLoading(true);
       
       // Get posts for feed
-      const feedPosts = await getFeedItems(20);
-      setPosts(feedPosts);
-      setFilteredPosts(feedPosts);
+      const feedPosts = await getFeedItems(20, forceRefresh);
+      
+      // Sort posts by timestamp in descending order
+      const sortedPosts = [...feedPosts].sort((a, b) => {
+        // Handle potential null/undefined timestamps
+        if (!a.timestamp) return 1;  // null timestamps go to the end
+        if (!b.timestamp) return -1;
+        
+        // Sort by timestamp descending (newest first)
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      });
+      
+      console.log(`Sorted ${sortedPosts.length} feed posts by timestamp`);
+      
+      setPosts(sortedPosts);
+      setFilteredPosts(sortedPosts);
       
       // Get recent users with stories - use a simpler query to avoid index requirements
       try {
@@ -85,17 +98,26 @@ const Feed = () => {
         
         // Group stories by users
         recentStories.forEach(story => {
+          // Make sure to use processed userPhotoURL from the story data
+          const photoURL = story.userPhotoURL || getUserProfileImage({
+            photoURL: story.userPhotoURL,
+            displayName: story.userDisplayName || 'User'
+          });
+          
           if (!userMap.has(story.userId)) {
             userMap.set(story.userId, {
               id: story.userId,
               displayName: story.userDisplayName || 'User',
-              photoURL: story.userPhotoURL,
+              photoURL: photoURL,
               hasUnseenStory: true,
               stories: []
             });
           }
           
-          userMap.get(story.userId).stories.push(story);
+          userMap.get(story.userId).stories.push({
+            ...story,
+            userPhotoURL: photoURL // Ensure each individual story has the processed photoURL
+          });
         });
         
         // Convert Map to Array
@@ -120,7 +142,7 @@ const Feed = () => {
       setAvailableTags(tags);
       
       // If no posts, show message
-      if (feedPosts.length === 0) {
+      if (sortedPosts.length === 0) {
         setError('No posts found in your feed yet.');
       } else {
         setError('');
@@ -392,8 +414,8 @@ const Feed = () => {
     setLoading(true);
     setError('');
     
-    // Refetch data
-    fetchFeedData();
+    // Refetch data with force refresh option
+    fetchFeedData(true);
   };
   
   // Toggle comment section visibility
@@ -521,8 +543,12 @@ const Feed = () => {
                       <div className={`story-border ${story.hasUnseenStory ? 'active' : ''} ${darkMode ? 'dark-mode' : ''}`}>
                         <div className={`story-avatar ${darkMode ? 'dark-mode' : ''}`}>
                           <img 
-                            src={story.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(story.displayName)}&background=random`} 
+                            src={story.photoURL || getUserProfileImage(story)} 
                             alt={story.displayName} 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.displayName || 'User')}&background=6A6AE3&color=fff`;
+                            }}
                           />
                         </div>
                       </div>
@@ -574,8 +600,12 @@ const Feed = () => {
                   <div className="user-info">
                     <div className="user-avatar">
                       <img 
-                        src={post.userPhotoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.userDisplayName || 'User')}&background=random`} 
+                        src={getUserProfileImage(post)} 
                         alt={post.userDisplayName || 'User'} 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(post.userDisplayName || 'User')}&background=6A6AE3&color=fff`;
+                        }}
                       />
                     </div>
                     <div className="user-details">
@@ -658,8 +688,12 @@ const Feed = () => {
                   <div key={user.id} className="trending-user">
                     <div className="user-avatar small">
                       <img 
-                        src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=random`} 
+                        src={getUserProfileImage(user)} 
                         alt={user.displayName} 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=6A6AE3&color=fff`;
+                        }}
                       />
                       {user.streak >= 7}
                     </div>
@@ -777,8 +811,12 @@ const Feed = () => {
               <div className="story-user-info">
                 <div className="story-user-avatar">
                   <img 
-                    src={viewedStory.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(viewedStory.displayName)}&background=random`} 
+                    src={viewedStory.photoURL || getUserProfileImage(viewedStory)} 
                     alt={viewedStory.displayName} 
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(viewedStory.displayName || 'User')}&background=6A6AE3&color=fff`;
+                    }}
                   />
                 </div>
                 <div>
