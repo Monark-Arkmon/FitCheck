@@ -4,6 +4,8 @@ import { likeCheckIn } from '../../services/fitnessService';
 import { formatDistanceToNow } from 'date-fns';
 import '../../styles/CheckInCard.css';
 import PhotoIcon from '@mui/icons-material/Photo';
+import PublicIcon from '@mui/icons-material/Public';
+import LockIcon from '@mui/icons-material/Lock';
 
 const CheckInCard = ({ checkIn, isInFeed = false }) => {
   const [likes, setLikes] = useState(checkIn.likes || 0);
@@ -44,14 +46,19 @@ const CheckInCard = ({ checkIn, isInFeed = false }) => {
         return '#4caf50';
       case 'Worked out earlier':
         return '#2196f3';
-      case 'Skipping today':
+      case 'Planning to workout':
+        return '#9c27b0';
+      case 'Rest day':
         return '#ff9800';
-      case 'Busy now':
+      case 'Other':
         return '#9e9e9e';
       default:
         return '#9e9e9e';
     }
   };
+  
+  // Determine if check-in is private
+  const isPrivate = checkIn.visibility === 'private';
   
   return (
     <div className="card-container">
@@ -72,11 +79,21 @@ const CheckInCard = ({ checkIn, isInFeed = false }) => {
           </div>
         )}
         
-        <div 
-          className="activity-badge" 
-          style={{ backgroundColor: getActivityColor(checkIn.activityType) }}
-        >
-          {checkIn.activityType}
+        <div className="header-right">
+          {/* Visibility indicator */}
+          {currentUser && currentUser.uid === checkIn.userId && (
+            <div className={`visibility-badge ${isPrivate ? 'private' : 'public'}`} title={isPrivate ? 'Private check-in (only visible to you)' : 'Public check-in'}>
+              {isPrivate ? <LockIcon fontSize="small" /> : <PublicIcon fontSize="small" />}
+              <span className="visibility-text">{isPrivate ? 'Private' : 'Public'}</span>
+            </div>
+          )}
+          
+          <div 
+            className="activity-badge" 
+            style={{ backgroundColor: getActivityColor(checkIn.activityType) }}
+          >
+            {checkIn.activityType}
+          </div>
         </div>
       </div>
       

@@ -27,6 +27,7 @@
 .modal-content.dark-mode {
   background-color: #1a1e2e;
   color: #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .modal-header {
@@ -73,6 +74,10 @@
   overflow-y: auto;
 }
 
+.modal-body.dark-mode {
+  background-color: #1a1e2e;
+}
+
 .check-in-form {
   display: flex;
   flex-direction: column;
@@ -93,6 +98,17 @@
 
 .form-label.dark-mode {
   color: #e2e8f0;
+}
+
+.form-hint {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #718096;
+  line-height: 1.4;
+}
+
+.form-hint.dark-mode {
+  color: #a0aec0;
 }
 
 .select-input {
@@ -124,6 +140,10 @@
   border-color: #4a5568;
 }
 
+.select-input.dark-mode::placeholder {
+  color: #718096;
+}
+
 .text-area {
   padding: 10px 12px;
   border-radius: 6px;
@@ -141,7 +161,7 @@
 }
 
 .text-area::placeholder {
-  color: #a0aec0;
+  color: var(--placeholder-color, #a0aec0);
 }
 
 .text-area:disabled {
@@ -157,6 +177,10 @@
 
 .text-area.dark-mode:focus {
   border-color: #4a5568;
+}
+
+.text-area.dark-mode::placeholder {
+  color: var(--placeholder-color, #718096);
 }
 
 .tag-selector {
@@ -196,6 +220,7 @@
 .tag-chip.selected {
   background-color: #e2e8f0;
   border: 1px solid #6A6AE3;
+  color: #4a5568;
 }
 
 .tag-chip.disabled {
@@ -215,6 +240,7 @@
 .tag-chip.dark-mode.selected {
   background-color: #4a5568;
   border: 1px solid #6A6AE3;
+  color: #e2e8f0;
 }
 
 .submit-button {
@@ -239,10 +265,12 @@
 .submit-button:disabled {
   background-color: #cbd5e0;
   cursor: not-allowed;
+  color: #718096;
 }
 
 .submit-button.dark-mode:disabled {
   background-color: #4a5568;
+  color: #a0aec0;
 }
 
 .error-message {
@@ -252,6 +280,11 @@
   border-left: 4px solid #e74c3c;
   color: #e74c3c;
   border-radius: 4px;
+}
+
+.error-message.dark-mode {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #f8a8a0;
 }
 
 .upload-message {
@@ -268,6 +301,7 @@
 
 .upload-message.dark-mode {
   color: #a0aec0;
+  background-color: rgba(106, 106, 227, 0.15);
 }
 
 .success-message {

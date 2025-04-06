@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider as CustomThemeProvider, useTheme } from './contexts/ThemeContext';
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -11,7 +11,17 @@ import Feed from './pages/Feed';
 import AiChat from './pages/AiChat';
 import CheckInSettings from './pages/CheckInSettings';
 import Notifications from './pages/Notifications';
+import LandingPage from './pages/LandingPage';
 import './styles/App.css';
+
+const AppLayout = () => {
+  return (
+    <>
+      <Navbar />
+      <Outlet />
+    </>
+  );
+};
 
 const AppContent = () => {
   const { darkMode } = useTheme();
@@ -28,21 +38,26 @@ const AppContent = () => {
   return (
     <div className="global-container">
       <Router>
-        <Navbar />
         <Routes>
+          {/* Public Routes */}
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           
+          {/* Protected Routes */}
           <Route element={<PrivateRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/chat" element={<AiChat />} />
-            <Route path="/settings/check-in" element={<CheckInSettings />} />
-            <Route path="/notifications" element={<Notifications />} />
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/chat" element={<AiChat />} />
+              <Route path="/settings/check-in" element={<CheckInSettings />} />
+              <Route path="/notifications" element={<Notifications />} />
+            </Route>
           </Route>
           
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Default Routes */}
+          <Route path="/" element={<Navigate to="/landing" replace />} />
+          <Route path="*" element={<Navigate to="/landing" replace />} />
         </Routes>
       </Router>
     </div>

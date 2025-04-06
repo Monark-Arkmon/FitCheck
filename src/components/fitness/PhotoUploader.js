@@ -77,16 +77,39 @@ const PhotoUploader = ({ onPhotoUploaded, darkMode }) => {
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(2, 10);
       const extension = file.name?.split('.').pop() || 'jpg';
-      const filename = `users/${currentUser.uid}/check-ins/${timestamp}-${randomId}.${extension}`;
+      const isCameraPhoto = file.name.includes('camera');
+      
+      // Use a more consistent path for camera photos vs uploaded photos
+      const storageFolder = isCameraPhoto ? 'camera-photos' : 'uploaded-photos';
+      const filename = `users/${currentUser.uid}/check-ins/${storageFolder}/${timestamp}-${randomId}.${extension}`;
+      
+      console.log(`Uploading file '${file.name}' to path: ${filename}`);
+      console.log(`File details: type=${file.type}, size=${file.size}, lastModified=${new Date(file.lastModified).toISOString()}`);
+      
       const storage = getStorage();
-      const storageRef = ref(storage, filename);  
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const storageRef = ref(storage, filename);
+      
+      // Add detailed metadata for improved handling
+      const metadata = {
+        contentType: file.type || 'image/jpeg',
+        customMetadata: {
+          'source': isCameraPhoto ? 'camera' : 'upload',
+          'timestamp': timestamp.toString(),
+          'userId': currentUser.uid,
+          'filename': file.name,
+          'client-timestamp': new Date().toISOString()
+        }
+      };
+
+      console.log('Uploading with metadata:', metadata);
+      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
       uploadTask.on(
         'state_changed',
         (snapshot) => {
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           setUploadProgress(progress);
+          console.log(`Upload progress: ${Math.round(progress)}%`);
           
           if (onPhotoUploaded) {
             onPhotoUploaded({status: 'uploading', progress});
@@ -103,11 +126,29 @@ const PhotoUploader = ({ onPhotoUploaded, darkMode }) => {
         },
         async () => {
           try {
+            console.log('Upload completed successfully, getting download URL...');
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log('Upload successful, URL:', downloadURL);
+            console.log('Upload successful, received URL:', downloadURL);
             
+            // Verify URL validity before returning
+            if (!downloadURL || typeof downloadURL !== 'string' || !downloadURL.startsWith('http')) {
+              throw new Error('Invalid download URL received');
+            }
+            
+            // Ensure consistent URL format
+            const finalUrl = downloadURL.trim();
+            console.log('Final URL to be sent to parent:', finalUrl);
+            
+            // Update local state first
+            setPreviewUrl(finalUrl);
+            
+            // Then notify parent component
             if (onPhotoUploaded) {
-              onPhotoUploaded({status: 'complete', url: downloadURL});
+              console.log('Notifying parent of completed upload with URL:', finalUrl);
+              // Use setTimeout to ensure state updates have propagated
+              setTimeout(() => {
+                onPhotoUploaded({status: 'complete', url: finalUrl});
+              }, 0);
             }
             
             setIsUploading(false);
@@ -265,23 +306,40 @@ const PhotoUploader = ({ onPhotoUploaded, darkMode }) => {
       const context = canvas.getContext('2d');
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       
+      // Use higher quality and proper mime type
       canvas.toBlob((blob) => {
         if (blob) {
           console.log('Photo captured successfully, blob size:', blob.size);
           
-          const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          // Create a more descriptive filename to identify camera photos
+          const timestamp = Date.now();
+          const fileName = `camera-capture-${timestamp}.jpg`;
+          console.log('Creating file with name:', fileName);
           
+          // Create a properly typed File object
+          const file = new File([blob], fileName, { 
+            type: 'image/jpeg',
+            lastModified: timestamp
+          });
+          
+          // Create preview URL
           const objectUrl = URL.createObjectURL(blob);
+          console.log('Created object URL for preview:', objectUrl);
           setPreviewUrl(objectUrl);
           
+          // Stop video capture before uploading
           stopCapture();
           
+          // Log before upload
+          console.log('Starting upload for captured camera photo with filename:', fileName);
+          
+          // Upload the file
           uploadFile(file);
         } else {
           console.error('Failed to create blob from canvas');
           setError('Failed to process captured photo. Please try again.');
         }
-      }, 'image/jpeg', 0.9);
+      }, 'image/jpeg', 0.92); // Slightly increased quality
     } catch (err) {
       console.error('Error capturing photo:', err);
       setError(`Error capturing photo: ${err.message}`);
@@ -334,7 +392,7 @@ const PhotoUploader = ({ onPhotoUploaded, darkMode }) => {
         e.stopPropagation();
       }}
     >
-      {error && <ErrorMessage>{error}</ErrorMessage>}
+      {error && <ErrorMessage darkMode={darkMode}>{error}</ErrorMessage>}
 
       {isCapturing ? (
         <CameraContainer>
@@ -464,8 +522,8 @@ const PhotoUploader = ({ onPhotoUploaded, darkMode }) => {
       
       {/* Upload status text */}
       {isUploading && !previewUrl && (
-        <UploadStatus>
-          <CircularProgress size={24} style={{ color: '#6A6AE3' }} />
+        <UploadStatus darkMode={darkMode}>
+          <CircularProgress size={24} style={{ color: darkMode ? '#8b8bf4' : '#6A6AE3' }} />
           <span>Uploading... {Math.round(uploadProgress)}%</span>
         </UploadStatus>
       )}
@@ -591,9 +649,9 @@ const ProgressText = styled.div`
 `;
 
 const ErrorMessage = styled.div`
-  color: #e74c3c;
+  color: ${props => props.darkMode ? '#f8a8a0' : '#e74c3c'};
   padding: 8px 12px;
-  background: rgba(231, 76, 60, 0.1);
+  background: ${props => props.darkMode ? 'rgba(231, 76, 60, 0.2)' : 'rgba(231, 76, 60, 0.1)'};
   border-radius: 4px;
   font-size: 14px;
 `;
@@ -602,7 +660,7 @@ const UploadStatus = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #6A6AE3;
+  color: ${props => props.darkMode ? '#8b8bf4' : '#6A6AE3'};
   font-size: 14px;
 `;
 

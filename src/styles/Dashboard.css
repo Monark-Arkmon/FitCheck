@@ -184,4 +184,49 @@
 
 .small:hover {
   background: rgba(106, 106, 227, 0.15);
+}
+
+.checkin-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.visibility-badge {
+  font-size: 12px;
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.visibility-badge.public {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.visibility-badge.private {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
+.dark-mode .visibility-badge.public {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: #63b3ed;
+}
+
+.dark-mode .visibility-badge.private {
+  background-color: rgba(156, 39, 176, 0.2);
+  color: #d53f8c;
+}
+
+.checkin-time {
+  font-size: 14px;
+  color: #718096;
+  display: flex;
+  align-items: center;
 } 

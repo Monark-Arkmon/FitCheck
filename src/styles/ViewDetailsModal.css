@@ -111,6 +111,47 @@
   color: #e2e8f0;
 }
 
+.visibility-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  width: fit-content;
+  font-weight: 500;
+}
+
+.visibility-indicator.public {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.visibility-indicator.private {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
+.visibility-note {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #718096;
+  margin-left: 4px;
+}
+
+.dark-mode .visibility-indicator.public {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: #63b3ed;
+}
+
+.dark-mode .visibility-indicator.private {
+  background-color: rgba(156, 39, 176, 0.2);
+  color: #d53f8c;
+}
+
+.dark-mode .visibility-note {
+  color: #a0aec0;
+}
+
 .photo-section {
   margin: 24px 0;
   width: 100%;

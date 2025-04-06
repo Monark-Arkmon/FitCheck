@@ -11,7 +11,6 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import VerifiedIcon from '@mui/icons-material/Verified';
 import CommentIcon from '@mui/icons-material/Comment';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { formatDistanceToNow } from 'date-fns';
@@ -578,11 +577,6 @@ const Feed = () => {
                         src={post.userPhotoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.userDisplayName || 'User')}&background=random`} 
                         alt={post.userDisplayName || 'User'} 
                       />
-                      {post.streak >= 7 && (
-                        <div className="verified-badge">
-                          <VerifiedIcon style={{ fontSize: '14px' }} />
-                        </div>
-                      )}
                     </div>
                     <div className="user-details">
                       <div className="username">{post.userDisplayName || post.userId || 'User'}</div>
@@ -667,11 +661,7 @@ const Feed = () => {
                         src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=random`} 
                         alt={user.displayName} 
                       />
-                      {user.streak >= 7 && (
-                        <div className="verified-badge">
-                          <VerifiedIcon style={{ fontSize: '14px' }} />
-                        </div>
-                      )}
+                      {user.streak >= 7}
                     </div>
                     <div className="user-details">
                       <div className="username small">{user.displayName}</div>

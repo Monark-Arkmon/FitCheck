@@ -14,14 +14,15 @@ import {
   increment,
   setDoc,
   Timestamp,
-  getFirestore
+  getFirestore,
+  deleteDoc
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, getStorage } from 'firebase/storage';
 
 // Submit a fitness check-in
 export const submitCheckIn = async (userId, data) => {
   try {
-    const { activityType, photoUrl, note } = data;
+    const { activityType, photoUrl, note, visibility } = data;
     
     // Create the check-in document
     const checkInRef = await addDoc(collection(db, 'checkIns'), {
@@ -30,7 +31,8 @@ export const submitCheckIn = async (userId, data) => {
       photoUrl: photoUrl || null,
       note: note || '',
       timestamp: serverTimestamp(),
-      likes: 0
+      likes: 0,
+      visibility: visibility || 'public'
     });
     
     // Update user stats
@@ -79,6 +81,29 @@ export const submitCheckIn = async (userId, data) => {
       'fitnessStats.totalWorkouts': isWorkout ? increment(1) : increment(0),
       lastCheckInDate: today
     });
+    
+    // Add to feed collection if the check-in is public
+    if (visibility !== 'private') {
+      console.log('Adding check-in to feed:', { checkInId: checkInRef.id, photoUrl });
+      
+      // Get user data for feed item
+      const displayName = userData.displayName || 'User';
+      const userPhotoURL = userData.photoURL || null;
+      
+      // Add to feed collection
+      await addDoc(collection(db, 'feed'), {
+        type: 'check-in',
+        checkInId: checkInRef.id,
+        userId,
+        userDisplayName: displayName,
+        userPhotoURL,
+        activityType,
+        note: note || '',
+        photoUrl: photoUrl || null,
+        timestamp: serverTimestamp(),
+        likes: 0
+      });
+    }
     
     return {
       id: checkInRef.id,
@@ -214,8 +239,8 @@ export const uploadImage = async (userId, file, path = 'check-ins') => {
   }
 };
 
-// Get user's check-in history
-export const getUserCheckIns = async (userId, limitCount) => {
+// Get user's check-ins - both public and private for the current user
+export const getUserCheckIns = async (userId, limitCount = 20) => {
   try {
     console.log(`Fetching check-ins for userId: ${userId}`);
     
@@ -224,44 +249,14 @@ export const getUserCheckIns = async (userId, limitCount) => {
       return { checkIns: [] };
     }
 
-    // First ensure the user document exists
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    
-    let userData = null;
-    
-    if (!userSnap.exists()) {
-      console.log('User document does not exist, creating it first');
-      userData = {
-        displayName: "New User",
-        streak: 0,
-        totalCheckIns: 0,
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp()
-      };
-      await setDoc(userRef, userData);
-    } else {
-      userData = userSnap.data();
-    }
-
-    // Get check-ins from the root checkIns collection
+    // Get check-ins from the collection
     const checkInsRef = collection(db, 'checkIns');
-    let q;
-    
-    if (limitCount) {
-      q = query(
-        checkInsRef, 
-        where('userId', '==', userId),
-        orderBy('timestamp', 'desc'),
-        limit(limitCount)
-      );
-    } else {
-      q = query(
-        checkInsRef, 
-        where('userId', '==', userId),
-        orderBy('timestamp', 'desc')
-      );
-    }
+    const q = query(
+      checkInsRef, 
+      where('userId', '==', userId),
+      orderBy('timestamp', 'desc'),
+      limit(limitCount)
+    );
     
     const querySnapshot = await getDocs(q);
     
@@ -282,12 +277,29 @@ export const getUserCheckIns = async (userId, limitCount) => {
     
     console.log(`Found ${checkIns.length} check-ins for user ${userId}`);
     
-    // Return both user stats and check-ins
+    // Get user document to include streak and stats information
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    let streak = 0;
+    let totalCheckIns = 0;
+    let lastCheckIn = null;
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      streak = userData.fitnessStats?.streak || 0;
+      totalCheckIns = userData.fitnessStats?.totalCheckIns || 0;
+      
+      // Set last check-in to the most recent one if available
+      if (checkIns.length > 0 && checkIns[0].timestamp) {
+        lastCheckIn = checkIns[0].timestamp;
+      }
+    }
+    
     return {
       checkIns,
-      streak: userData?.streak || 0,
-      totalCheckIns: checkIns.length,
-      lastCheckIn: checkIns.length > 0 ? checkIns[0].timestamp : null
+      streak,
+      totalCheckIns,
+      lastCheckIn,
+      lastVisible: querySnapshot.docs[querySnapshot.docs.length - 1]
     };
   } catch (error) {
     console.error("Error getting user check-ins:", error);
@@ -592,18 +604,43 @@ export const addCheckIn = async (checkInData, userId) => {
   });
 
   try {
-    // Prepare check-in document
+    // Validate photoUrl
+    let validatedPhotoUrl = null;
+    if (checkInData.photoUrl) {
+      if (typeof checkInData.photoUrl === 'string' && checkInData.photoUrl.trim().startsWith('http')) {
+        validatedPhotoUrl = checkInData.photoUrl.trim();
+        console.log('Valid photoUrl confirmed for storage. URL type:', 
+          checkInData.photoUrl.includes('camera-photos') ? 'camera photo' : 'uploaded photo');
+      } else {
+        console.warn('Invalid photoUrl format, storing as null:', checkInData.photoUrl);
+      }
+    } else {
+      console.log('No photoUrl provided in check-in data');
+    }
+    
+    // Set default visibility to public if not specified
+    const visibility = checkInData.visibility || 'public';
+    const isPublic = visibility === 'public';
+    
+    console.log(`Check-in visibility: ${visibility} (${isPublic ? 'counts towards streak' : 'does not count towards streak'})`);
+    
+    // Prepare check-in document with explicit photoUrl handling
     const checkInDoc = {
       userId,
       activityType: checkInData.activityType || 'Other',
       note: checkInData.note || '',
       tags: checkInData.tags || [],
-      photoUrl: checkInData.photoUrl || null,
+      photoUrl: validatedPhotoUrl, // Already validated
+      visibility: visibility,
+      isPublic: isPublic,
       timestamp: serverTimestamp(),
       likes: 0,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      hasPhoto: !!validatedPhotoUrl // Add a boolean flag for easier querying
     };
 
+    console.log('Adding check-in document with photoUrl:', validatedPhotoUrl ? 'Yes' : 'No');
+    
     // Add to Firestore
     const checkInRef = await addDoc(collection(db, 'checkIns'), checkInDoc);
     const checkInId = checkInRef.id;
@@ -614,24 +651,68 @@ export const addCheckIn = async (checkInData, userId) => {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
     
+    // Get current date for streak calculation
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
     if (userDoc.exists()) {
-      // Update existing user document
+      const userData = userDoc.data();
+      const lastCheckInDate = userData.lastCheckInDate || '';
+      const userStats = userData.fitnessStats || { totalCheckIns: 0, streak: 0 };
+      
+      // Calculate streak only for public check-ins
+      let newStreak = userStats.streak || 0;
+      
+      if (isPublic) {
+        // Check if activity type is workout related
+        const isWorkout = ['Currently working out', 'Worked out earlier'].includes(checkInData.activityType);
+        
+        if (isWorkout) {
+          // Calculate streak based on last check-in date
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          
+          if (lastCheckInDate === yesterdayStr) {
+            // Last check-in was yesterday, increment streak
+            newStreak += 1;
+            console.log(`Incrementing streak from ${userStats.streak} to ${newStreak}`);
+          } else if (lastCheckInDate !== today) {
+            // Last check-in was not yesterday and not today, reset streak to 1
+            newStreak = 1;
+            console.log(`Resetting streak to 1 (last check-in was on ${lastCheckInDate})`);
+          } else {
+            // Already checked in today, no change to streak
+            console.log(`Maintaining streak at ${newStreak} (already checked in today)`);
+          }
+        }
+      } else {
+        console.log(`Private check-in: Keeping streak at ${newStreak} (private check-ins don't affect streak)`);
+      }
+      
+      // Update user document with streak and check-in info
       await updateDoc(userRef, {
         'fitnessStats.totalCheckIns': increment(1),
-        lastCheckInDate: new Date().toISOString().split('T')[0],
+        'fitnessStats.streak': newStreak,
+        lastCheckInDate: isPublic ? today : lastCheckInDate, // Only update lastCheckInDate for public check-ins
         lastActivity: serverTimestamp()
       });
+      
+      console.log(`Updated user stats - Total check-ins: ${userStats.totalCheckIns + 1}, Streak: ${newStreak}`);
     } else {
       // Create new user document if it doesn't exist
+      const initialStreak = isPublic && ['Currently working out', 'Worked out earlier'].includes(checkInData.activityType) ? 1 : 0;
+      
       await setDoc(userRef, {
         fitnessStats: {
           totalCheckIns: 1,
-          streak: 0
+          streak: initialStreak
         },
-        lastCheckInDate: new Date().toISOString().split('T')[0],
+        lastCheckInDate: isPublic ? today : '',
         createdAt: serverTimestamp(),
         lastActivity: serverTimestamp()
       });
+      
+      console.log(`Created new user document with initial streak: ${initialStreak}`);
     }
     
     // Verify that photoUrl was saved correctly
@@ -642,9 +723,22 @@ export const addCheckIn = async (checkInData, userId) => {
         savedData.photoUrl ? '[URL exists]' : 'null');
       
       // If there's a photoUrl mismatch, try to update it
-      if (checkInData.photoUrl && !savedData.photoUrl) {
+      if (validatedPhotoUrl && !savedData.photoUrl) {
         console.warn('PhotoUrl not saved correctly, attempting to update');
-        await updateDoc(checkInRef, { photoUrl: checkInData.photoUrl });
+        
+        // Force update with explicit values
+        await updateDoc(checkInRef, { 
+          photoUrl: validatedPhotoUrl,
+          hasPhoto: true,
+          photoUrlUpdated: true,
+          updatedAt: serverTimestamp()
+        });
+        
+        // Double-check the update was successful
+        const updatedCheckIn = await getDoc(checkInRef);
+        const updatedData = updatedCheckIn.data();
+        console.log('After update, photoUrl is now:', 
+          updatedData.photoUrl ? '[URL exists]' : 'null');
       }
     }
 
@@ -652,6 +746,7 @@ export const addCheckIn = async (checkInData, userId) => {
     return {
       id: checkInId,
       ...checkInDoc,
+      photoUrl: validatedPhotoUrl, // Ensure we return the validated URL
       timestamp: new Date().toISOString() // Convert for client use
     };
   } catch (error) {
@@ -703,13 +798,18 @@ export const getUserProfile = async (userId) => {
   }
 };
 
-// Get feed items
+// Get feed items - only public check-ins from all users
 export const getFeedItems = async (limit = 20) => {
   try {
-    console.log(`Fetching feed items, limit: ${limit}`);
+    console.log(`Fetching public feed items, limit: ${limit}`);
     
     const feedRef = collection(db, 'feed');
-    const q = query(feedRef, orderBy('timestamp', 'desc'), limit);
+    const q = query(
+      feedRef, 
+      orderBy('timestamp', 'desc'), 
+      limit
+    );
+    
     const querySnapshot = await getDocs(q);
     
     const feedItems = [];
@@ -916,6 +1016,138 @@ export const updateAvailableTags = async (tags) => {
   }
 };
 
+// Delete a check-in and recalculate streak if needed
+export const deleteCheckIn = async (checkInId, userId) => {
+  if (!checkInId || !userId) {
+    throw new Error('Check-in ID and user ID are required');
+  }
+
+  try {
+    console.log(`Deleting check-in ${checkInId} for user ${userId}`);
+    
+    // Get the check-in to see if it's public (affects streak)
+    const checkInRef = doc(db, 'checkIns', checkInId);
+    const checkInDoc = await getDoc(checkInRef);
+    
+    if (!checkInDoc.exists()) {
+      throw new Error('Check-in not found');
+    }
+    
+    const checkInData = checkInDoc.data();
+    
+    // Verify ownership
+    if (checkInData.userId !== userId) {
+      throw new Error('You do not have permission to delete this check-in');
+    }
+    
+    // Check if this was a public check-in that might affect streak
+    const isPublic = checkInData.visibility === 'public';
+    const checkInDate = checkInData.timestamp instanceof Timestamp 
+      ? checkInData.timestamp.toDate() 
+      : new Date(checkInData.timestamp);
+    
+    // Delete the check-in
+    await deleteDoc(checkInRef);
+    console.log(`Check-in ${checkInId} deleted`);
+    
+    // If it was a public check-in, we need to recalculate streak
+    if (isPublic) {
+      await recalculateUserStreak(userId);
+    }
+    
+    return { success: true, message: 'Check-in deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting check-in:', error);
+    throw error;
+  }
+};
+
+// Recalculate a user's streak based on their public check-ins
+const recalculateUserStreak = async (userId) => {
+  if (!userId) return;
+  
+  try {
+    console.log(`Recalculating streak for user ${userId}`);
+    
+    // Get the user's public check-ins, ordered by date
+    const checkInsRef = collection(db, 'checkIns');
+    const q = query(
+      checkInsRef,
+      where('userId', '==', userId),
+      where('visibility', '==', 'public'),
+      where('activityType', 'in', ['Currently working out', 'Worked out earlier']),
+      orderBy('timestamp', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    // Convert to array of dates
+    const checkInDates = [];
+    querySnapshot.forEach(doc => {
+      const data = doc.data();
+      const timestamp = data.timestamp instanceof Timestamp 
+        ? data.timestamp.toDate() 
+        : new Date(data.timestamp);
+      
+      // Format as YYYY-MM-DD
+      const dateStr = timestamp.toISOString().split('T')[0];
+      checkInDates.push(dateStr);
+    });
+    
+    console.log(`Found ${checkInDates.length} public workout check-ins`);
+    
+    // If no check-ins, reset streak to 0
+    if (checkInDates.length === 0) {
+      console.log('No public check-ins found, resetting streak to 0');
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        'fitnessStats.streak': 0,
+        lastCheckInDate: '' // Reset last check-in date
+      });
+      return;
+    }
+    
+    // Sort dates from newest to oldest
+    checkInDates.sort((a, b) => new Date(b) - new Date(a));
+    
+    // Remove duplicates (only count one check-in per day)
+    const uniqueDates = [...new Set(checkInDates)];
+    
+    // Calculate streak
+    let streak = 1; // Start with the most recent check-in
+    let lastDate = new Date(uniqueDates[0]);
+    
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const currentDate = new Date(uniqueDates[i]);
+      
+      // Check if current date is exactly one day before lastDate
+      const daysBetween = Math.round((lastDate - currentDate) / (1000 * 60 * 60 * 24));
+      
+      if (daysBetween === 1) {
+        // Consecutive day, increment streak
+        streak++;
+        lastDate = currentDate;
+      } else {
+        // Break in streak, stop counting
+        break;
+      }
+    }
+    
+    console.log(`Recalculated streak: ${streak}`);
+    
+    // Update user document with new streak
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      'fitnessStats.streak': streak,
+      lastCheckInDate: uniqueDates[0] // Most recent check-in date
+    });
+    
+    console.log(`Updated user streak to ${streak}`);
+  } catch (error) {
+    console.error('Error recalculating streak:', error);
+  }
+};
+
 export default {
   getUserProfile,
   getUserCheckIns,
@@ -927,5 +1159,6 @@ export default {
   likeFeedItem,
   unlikeFeedItem,
   getAvailableTags,
-  updateAvailableTags
+  updateAvailableTags,
+  deleteCheckIn
 }; 

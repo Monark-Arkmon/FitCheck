@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { addCheckIn } from '../../services/fitnessService';
 import PhotoUploader from './PhotoUploader';
@@ -16,6 +16,11 @@ const ACTIVITY_TYPES = [
   'Other'
 ];
 
+const VISIBILITY_OPTIONS = [
+  { value: 'public', label: 'Public' },
+  { value: 'private', label: 'Private' }
+];
+
 const PREDEFINED_TAGS = [
   'cardio', 'strength', 'flexibility', 'hiit', 'yoga', 'running',
   'cycling', 'swimming', 'weightlifting', 'crossfit', 'fitness',
@@ -26,13 +31,31 @@ const PREDEFINED_TAGS = [
 const ManualCheckInModal = ({ onClose, darkMode, onCheckInComplete }) => {
   const { currentUser } = useAuth();
   const [activityType, setActivityType] = useState(ACTIVITY_TYPES[0]);
+  const [visibility, setVisibility] = useState(VISIBILITY_OPTIONS[0].value);
   const [note, setNote] = useState('');
   const [tags, setTags] = useState([]);
   const [photoUrl, setPhotoUrl] = useState(null);
+  const photoUrlRef = useRef(null); // Reference to track the latest photoUrl value
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [photoStatus, setPhotoStatus] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Keep photoUrlRef in sync with the latest photoUrl state
+  useEffect(() => {
+    photoUrlRef.current = photoUrl;
+    console.log('photoUrl state updated:', photoUrl);
+  }, [photoUrl]);
+  
+  // Ensure photoUrl stays in sync with photoStatus when complete
+  useEffect(() => {
+    if (photoStatus?.status === 'complete' && photoStatus?.url) {
+      if (photoUrl !== photoStatus.url) {
+        console.log('Synchronizing photoUrl from photoStatus:', photoStatus.url);
+        setPhotoUrl(photoStatus.url);
+      }
+    }
+  }, [photoStatus, photoUrl]);
   
   const handleModalClose = (e) => {
     if (photoStatus?.status === 'uploading') {
@@ -45,19 +68,28 @@ const ManualCheckInModal = ({ onClose, darkMode, onCheckInComplete }) => {
   };
   
   const handlePhotoUploaded = (statusUpdate) => {
-    console.log('Photo status update:', statusUpdate);
+    console.log('Photo status update received:', statusUpdate);
     
     if (statusUpdate.status === 'uploading') {
       setPhotoStatus({status: 'uploading', progress: statusUpdate.progress});
       setUploadProgress(statusUpdate.progress);
     } 
     else if (statusUpdate.status === 'complete') {
+      console.log('Photo upload complete. Setting URL:', statusUpdate.url);
+      // Update both state variables
       setPhotoUrl(statusUpdate.url);
       setPhotoStatus({status: 'complete', url: statusUpdate.url});
+      
+      // Verify state was updated
+      setTimeout(() => {
+        console.log('Current photoUrl state after upload complete:', photoUrl);
+        console.log('Current photoUrlRef value:', photoUrlRef.current);
+      }, 100);
     }
     else if (statusUpdate.status === 'error') {
       setErrorMessage(`Photo upload error: ${statusUpdate.error}`);
       setPhotoStatus({status: 'error', error: statusUpdate.error});
+      setPhotoUrl(null);
     }
     else if (statusUpdate.status === 'removed') {
       setPhotoUrl(null);
@@ -96,22 +128,46 @@ const ManualCheckInModal = ({ onClose, darkMode, onCheckInComplete }) => {
       return;
     }
     
+    console.log('Starting submission with current photoUrl state:', photoUrl);
+    console.log('Photo status before submission:', photoStatus);
+    console.log('PhotoUrlRef before submission:', photoUrlRef.current);
+    
     setStatus('submitting');
     setErrorMessage('');
     
     try {
+      // Get the latest photoUrl using ref to avoid closure issues
+      const currentPhotoUrl = photoUrlRef.current || (photoStatus?.status === 'complete' ? photoStatus.url : null);
+      console.log('Using photoUrl for submission:', currentPhotoUrl);
+      
+      // Verify photoUrl is valid before submission
+      let validatedPhotoUrl = null;
+      if (currentPhotoUrl) {
+        if (typeof currentPhotoUrl === 'string' && currentPhotoUrl.trim().startsWith('http')) {
+          validatedPhotoUrl = currentPhotoUrl.trim();
+          console.log('Using valid photo URL:', validatedPhotoUrl);
+        } else {
+          console.warn('Invalid photo URL detected:', currentPhotoUrl);
+          setErrorMessage('Invalid photo URL format. Please try uploading again.');
+          setStatus('error');
+          return;
+        }
+      }
+      
       const checkInData = {
         activityType,
         note: note.trim(),
         tags: [...tags],
-        photoUrl,
+        photoUrl: validatedPhotoUrl,
+        visibility: visibility,
         timestamp: new Date()
       };
       
       console.log('Submitting check-in:', {
         ...checkInData,
-        photoUrl: photoUrl ? '[URL present]' : null
+        photoUrl: validatedPhotoUrl ? '[valid URL present]' : null
       });
+      
       const result = await addCheckIn(checkInData, currentUser.uid);
       
       console.log('Check-in added successfully:', result);
@@ -168,9 +224,9 @@ const ManualCheckInModal = ({ onClose, darkMode, onCheckInComplete }) => {
           )}
         </div>
         
-        <div className="modal-body">
+        <div className={`modal-body ${darkMode ? 'dark-mode' : ''}`}>
           {errorMessage && (
-            <div className="error-message">
+            <div className={`error-message ${darkMode ? 'dark-mode' : ''}`}>
               {errorMessage}
             </div>
           )}
@@ -219,6 +275,27 @@ const ManualCheckInModal = ({ onClose, darkMode, onCheckInComplete }) => {
               </div>
               
               <div className="form-group">
+                <label htmlFor="visibility" className={`form-label ${darkMode ? 'dark-mode' : ''}`}>Visibility</label>
+                <select 
+                  id="visibility" 
+                  value={visibility}
+                  onChange={e => setVisibility(e.target.value)}
+                  required
+                  className={`select-input ${darkMode ? 'dark-mode' : ''}`}
+                  disabled={status === 'submitting' || photoStatus?.status === 'uploading'}
+                >
+                  {VISIBILITY_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+                <div className={`form-hint ${darkMode ? 'dark-mode' : ''}`}>
+                  {visibility === 'private' ? 
+                    'Private check-ins are only visible to you and don\'t increase your streak.' : 
+                    'Public check-ins are visible to everyone and count towards your streak.'}
+                </div>
+              </div>
+              
+              <div className="form-group">
                 <label htmlFor="note" className={`form-label ${darkMode ? 'dark-mode' : ''}`}>Note (optional)</label>
                 <textarea 
                   id="note"
@@ -228,6 +305,9 @@ const ManualCheckInModal = ({ onClose, darkMode, onCheckInComplete }) => {
                   rows={3}
                   className={`text-area ${darkMode ? 'dark-mode' : ''}`}
                   disabled={status === 'submitting' || photoStatus?.status === 'uploading'}
+                  style={{
+                    "--placeholder-color": darkMode ? "#718096" : "#a0aec0"
+                  }}
                 />
               </div>
               
@@ -282,4 +362,4 @@ const ManualCheckInModal = ({ onClose, darkMode, onCheckInComplete }) => {
   );
 };
 
-export default ManualCheckInModal; 
+export default ManualCheckInModal;

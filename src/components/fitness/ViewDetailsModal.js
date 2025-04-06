@@ -9,6 +9,9 @@ import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import CircularProgress from '@mui/material/CircularProgress';
+import PublicIcon from '@mui/icons-material/Public';
+import LockIcon from '@mui/icons-material/Lock';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import '../../styles/ViewDetailsModal.css';
 
 const ViewDetailsModal = ({ isOpen, onClose, checkIn, darkMode }) => {
@@ -51,6 +54,11 @@ const ViewDetailsModal = ({ isOpen, onClose, checkIn, darkMode }) => {
                     !!checkIn.photoUrl || 
                     (checkIn.tags && checkIn.tags.length > 0);
   
+  // Determine visibility status
+  const isPrivate = checkIn.visibility === 'private';
+  const visibilityLabel = isPrivate ? 'Private' : 'Public';
+  const streakImpact = isPrivate ? 'Does not count towards streak' : 'Counts towards streak';
+  
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className={`modal-content ${darkMode ? 'dark-mode' : ''}`} onClick={e => e.stopPropagation()}>
@@ -73,6 +81,21 @@ const ViewDetailsModal = ({ isOpen, onClose, checkIn, darkMode }) => {
             </div>
             <div className={`detail-value ${darkMode ? 'dark-mode' : ''}`}>
               {checkIn.activityType || 'Not specified'}
+            </div>
+          </div>
+          
+          {/* Visibility Status */}
+          <div className="detail-row">
+            <div className={`detail-label ${darkMode ? 'dark-mode' : ''}`}>
+              <VisibilityIcon />
+              Visibility
+            </div>
+            <div className={`detail-value ${darkMode ? 'dark-mode' : ''}`}>
+              <div className={`visibility-indicator ${isPrivate ? 'private' : 'public'}`}>
+                {isPrivate ? <LockIcon fontSize="small" /> : <PublicIcon fontSize="small" />}
+                <span>{visibilityLabel}</span>
+              </div>
+              <div className="visibility-note">{streakImpact}</div>
             </div>
           </div>
           

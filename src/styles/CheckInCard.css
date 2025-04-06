@@ -48,6 +48,36 @@
   align-items: center;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.visibility-badge {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-right: 4px;
+  font-weight: 500;
+}
+
+.visibility-badge.public {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.visibility-badge.private {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
+.visibility-text {
+  margin-left: 4px;
+}
+
 .activity-badge {
   color: white;
   font-size: 0.75rem;
@@ -138,4 +168,40 @@
 
 .dark-mode .photo-indicator {
   background: rgba(74, 144, 226, 0.2);
+}
+
+.dark-mode .card-container {
+  background-color: #1a1e2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .card-header {
+  border-bottom: 1px solid #2d3748;
+}
+
+.dark-mode .card-footer {
+  border-top: 1px solid #2d3748;
+  color: #a0aec0;
+}
+
+.dark-mode .note-text {
+  color: #e2e8f0;
+}
+
+.dark-mode .user-name {
+  color: #e2e8f0;
+}
+
+.dark-mode .time-stamp {
+  color: #a0aec0;
+}
+
+.dark-mode .visibility-badge.public {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: #63b3ed;
+}
+
+.dark-mode .visibility-badge.private {
+  background-color: rgba(156, 39, 176, 0.2);
+  color: #d53f8c;
 } 

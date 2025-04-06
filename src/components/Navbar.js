@@ -12,7 +12,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 const Navbar = () => {
   const [error, setError] = useState('');
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
-  const { currentUser, logout } = useAuth();
+  const { currentUser, signOut } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,8 +22,8 @@ const Navbar = () => {
     setError('');
     
     try {
-      await logout();
-      navigate('/login');
+      await signOut();
+      navigate('/landing');
     } catch {
       setError('Failed to log out');
     }

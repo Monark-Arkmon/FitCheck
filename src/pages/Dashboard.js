@@ -307,6 +307,12 @@ const Dashboard = () => {
                   <div className="checkin-type">
                     {getActivityIcon(checkIn.activityType)}
                     <span>{checkIn.activityType || 'Check-in'}</span>
+                    
+                    {checkIn.visibility && (
+                      <span className={`visibility-badge ${checkIn.visibility === 'private' ? 'private' : 'public'}`} title={`${checkIn.visibility === 'private' ? 'Private' : 'Public'} check-in`}>
+                        {checkIn.visibility === 'private' ? '🔒' : '🌐'}
+                      </span>
+                    )}
                   </div>
                   <div className="checkin-time">
                     {getTimeLabel(checkIn.timestamp)}
@@ -320,6 +326,8 @@ const Dashboard = () => {
                 
                 {checkIn.notes ? (
                   <div className="checkin-notes">{checkIn.notes}</div>
+                ) : checkIn.note ? (
+                  <div className="checkin-notes">{checkIn.note}</div>
                 ) : (
                   <div className="checkin-empty-content">No notes for this check-in</div>
                 )}
