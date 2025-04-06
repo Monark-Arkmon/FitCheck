@@ -120,7 +120,7 @@ export const getRecentStories = async (limitCount = 20) => {
  */
 export const deleteStory = async (storyId, userId) => {
   try {
-    // Get story to verify ownership
+    
     const storyRef = doc(db, 'stories', storyId);
     const storySnap = await getDoc(storyRef);
     
@@ -130,15 +130,15 @@ export const deleteStory = async (storyId, userId) => {
     
     const storyData = storySnap.data();
     
-    // Verify ownership
+   
     if (storyData.userId !== userId) {
       throw new Error('Unauthorized to delete this story');
     }
     
-    // Delete story
+    
     await deleteDoc(storyRef);
     
-    // Remove from feed
+   
     const feedQuery = query(
       collection(db, 'feed'),
       where('storyId', '==', storyId)
@@ -146,11 +146,11 @@ export const deleteStory = async (storyId, userId) => {
     
     const feedSnapshot = await getDocs(feedQuery);
     
-    // Delete all matching feed items
+    
     const deletePromises = feedSnapshot.docs.map(doc => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
     
-    // Remove from user's stories subcollection
+    
     const userStoryQuery = query(
       collection(db, `users/${userId}/stories`),
       where('storyId', '==', storyId)
@@ -158,7 +158,7 @@ export const deleteStory = async (storyId, userId) => {
     
     const userStorySnapshot = await getDocs(userStoryQuery);
     
-    // Delete all matching user story items
+    
     const deleteUserStoryPromises = userStorySnapshot.docs.map(doc => deleteDoc(doc.ref));
     await Promise.all(deleteUserStoryPromises);
     
@@ -189,12 +189,12 @@ export const getFeedItems = async (limitCount = 20) => {
       timestamp: doc.data().timestamp?.toDate()
     }));
     
-    // Get additional user info for all posts
+    
     const enrichedPosts = await Promise.all(feedItems.map(async (post) => {
       if (!post.userId) return post;
       
       try {
-        // Get user data
+        
         const userDoc = await getDoc(doc(db, 'users', post.userId));
         
         if (userDoc.exists()) {
@@ -228,7 +228,7 @@ export const getFeedItems = async (limitCount = 20) => {
  */
 export const toggleLike = async (feedItemId, userId) => {
   try {
-    // Check if user already liked this item
+    
     const likeRef = doc(db, `feed/${feedItemId}/likes`, userId);
     const likeSnap = await getDoc(likeRef);
     
@@ -242,23 +242,23 @@ export const toggleLike = async (feedItemId, userId) => {
     const currentLikes = feedItemSnap.data().likes || 0;
     
     if (likeSnap.exists()) {
-      // User already liked, so unlike
+      
       await deleteDoc(likeRef);
       
-      // Update feed item
+      
       await updateDoc(feedItemRef, {
         likes: Math.max(0, currentLikes - 1)
       });
       
       return false;
     } else {
-      // User hasn't liked, so like
+     
       await setDoc(likeRef, {
         userId,
         timestamp: serverTimestamp()
       });
       
-      // Update feed item
+      
       await updateDoc(feedItemRef, {
         likes: currentLikes + 1
       });
@@ -339,12 +339,12 @@ export const togglePostLike = async (userId, postId) => {
   const likeRef = doc(db, 'postLikes', `${userId}_${postId}`);
 
   try {
-    // Check if user already liked this post
+  
     const likeDoc = await getDoc(likeRef);
     
-    // Using a transaction to ensure atomicity
+    
     return await runTransaction(db, async (transaction) => {
-      // Get the current post data
+     
       const postDoc = await transaction.get(postRef);
       
       if (!postDoc.exists()) {
@@ -354,14 +354,14 @@ export const togglePostLike = async (userId, postId) => {
       const currentLikes = postDoc.data().likes || 0;
       
       if (likeDoc.exists()) {
-        // User has already liked - unlike
+       
         transaction.delete(likeRef);
         transaction.update(postRef, { 
           likes: Math.max(0, currentLikes - 1)
         });
         return { liked: false };
       } else {
-        // User hasn't liked - add like
+      
         transaction.set(likeRef, { 
           userId,
           postId,
@@ -422,7 +422,7 @@ export const getPostLikes = async (postId, limit = 10) => {
     const querySnapshot = await getDocs(q);
     const userIds = querySnapshot.docs.map(doc => doc.data().userId);
     
-    // Get user details for each like
+    
     const userPromises = userIds.map(userId => {
       const userRef = doc(db, 'users', userId);
       return getDoc(userRef);
@@ -458,7 +458,7 @@ export const addComment = async (userId, postId, content) => {
   const commentsRef = collection(db, 'postComments');
   
   try {
-    // First create the comment
+   
     const newCommentRef = doc(commentsRef);
     const commentData = {
       id: newCommentRef.id,
@@ -469,10 +469,10 @@ export const addComment = async (userId, postId, content) => {
       likes: 0
     };
     
-    // Store the comment
+    
     await setDoc(newCommentRef, commentData);
     
-    // Then update the post comment count in a separate operation
+   
     try {
       const postRef = doc(db, 'feed', postId);
       const postDoc = await getDoc(postRef);
@@ -485,12 +485,12 @@ export const addComment = async (userId, postId, content) => {
       }
     } catch (updateError) {
       console.error("Error updating comment count:", updateError);
-      // Don't fail the whole operation if updating the count fails
+      
     }
     
     return {
       ...commentData,
-      timestamp: new Date() // For immediate use in UI
+      timestamp: new Date() 
     };
   } catch (error) {
     console.error("Error adding comment:", error);
@@ -510,7 +510,7 @@ export const getPostComments = async (postId, limitCount = 10) => {
   const db = getFirestore();
   const commentsRef = collection(db, 'postComments');
   
-  // Using only a where clause without orderBy to avoid needing a composite index
+  
   const q = query(
     commentsRef,
     where('postId', '==', postId),
@@ -520,20 +520,20 @@ export const getPostComments = async (postId, limitCount = 10) => {
   try {
     const querySnapshot = await getDocs(q);
     
-    // Sort locally after fetching data
+   
     const comments = querySnapshot.docs
       .map(doc => ({
         ...doc.data(),
         id: doc.id
       }))
       .sort((a, b) => {
-        // Sort by timestamp descending (newest first)
+       
         const timeA = a.timestamp?.toDate?.() || new Date(0);
         const timeB = b.timestamp?.toDate?.() || new Date(0);
         return timeB - timeA;
       });
     
-    // Get user details for each comment
+    
     const userIds = [...new Set(comments.map(comment => comment.userId))];
     const userPromises = userIds.map(userId => {
       const userRef = doc(db, 'users', userId);
@@ -552,7 +552,7 @@ export const getPostComments = async (postId, limitCount = 10) => {
       }
     });
     
-    // Combine comment and user data
+    
     return comments.map(comment => ({
       ...comment,
       user: users[comment.userId] || null
@@ -580,7 +580,7 @@ export const deleteComment = async (userId, commentId, postId) => {
   const postRef = doc(db, 'feed', postId);
   
   try {
-    // First check if the comment exists and belongs to the user
+    
     const commentDoc = await getDoc(commentRef);
     
     if (!commentDoc.exists()) {
@@ -589,13 +589,13 @@ export const deleteComment = async (userId, commentId, postId) => {
     
     const commentData = commentDoc.data();
     
-    // Only allow deletion if the user is the comment author
+    
     if (commentData.userId !== userId) {
       throw new Error('You do not have permission to delete this comment');
     }
     
     return await runTransaction(db, async (transaction) => {
-      // Get current post to update the comment count
+      
       const postDoc = await transaction.get(postRef);
       
       if (!postDoc.exists()) {
@@ -604,7 +604,7 @@ export const deleteComment = async (userId, commentId, postId) => {
       
       const currentCommentCount = postDoc.data().commentCount || 0;
       
-      // Delete comment and update post comment count
+      
       transaction.delete(commentRef);
       transaction.update(postRef, { 
         commentCount: Math.max(0, currentCommentCount - 1) 

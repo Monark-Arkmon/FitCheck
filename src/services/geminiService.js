@@ -1,19 +1,16 @@
 import axios from 'axios';
 
-// Using the server proxy endpoint for Gemini API
 const SERVER_API_URL = '/api/ai/chat';
 
-// Function to create chat completion with Gemini API via server
 export const generateChatResponse = async (messages, model = 'gemini-2.0-flash') => {
   try {
     console.log('Sending request to', SERVER_API_URL);
-    // Format messages for our server endpoint
     const response = await axios.post(SERVER_API_URL, {
       messages,
       model
     });
     
-    // Extract the response text
+  
     if (response.data && response.data.text) {
       return response.data.text;
     } else {
@@ -29,9 +26,9 @@ export const generateChatResponse = async (messages, model = 'gemini-2.0-flash')
   }
 };
 
-// Construct a base prompt with formatting instructions
+
 const getFormattedPrompt = (query, contextInfo = {}) => {
-  // Combine any context info into a readable format
+  
   const contextSection = Object.entries(contextInfo)
     .filter(([_, value]) => value !== undefined && value !== null && value !== '')
     .map(([key, value]) => {
@@ -55,16 +52,16 @@ IMPORTANT: Format your response using ONLY the following style rules - DO NOT us
 - Include safety precautions where relevant`;
 };
 
-// Function to get fitness advice for specific context
+
 export const getFitnessAdvice = async (query, fitnessLevel = 'intermediate', fitnessGoals = []) => {
   try {
-    // Handle generic greetings
+    
     if (query.toLowerCase().match(/^(hi|hello|hey|greetings|howdy).{0,5}$/)) {
       const greeting = `Hello! I'm your AI fitness coach. How can I help you with your fitness journey today? You can ask me about workout routines, nutrition advice, exercise techniques, or specific fitness goals.`;
       return greeting;
     }
     
-    // Create a more detailed fitness-specific prompt
+    
     const enhancedQuery = getFormattedPrompt(`As a fitness expert, please provide advice on: ${query}`, {
       'Fitness level': fitnessLevel,
       'Fitness goals': fitnessGoals
@@ -85,11 +82,10 @@ export const getFitnessAdvice = async (query, fitnessLevel = 'intermediate', fit
   }
 };
 
-// Function to analyze a workout photo and provide feedback
+
 export const analyzeWorkoutPhoto = async (photoDescription, exerciseType) => {
   try {
-    // Note: A real implementation would upload and process the actual photo
-    // Here we're using a text description as a placeholder since we can't process images directly
+    
     const prompt = getFormattedPrompt(`Based on this workout photo showing ${photoDescription} for ${exerciseType}, analyze the form and provide feedback.`);
     
     const messages = [
@@ -107,7 +103,7 @@ export const analyzeWorkoutPhoto = async (photoDescription, exerciseType) => {
   }
 };
 
-// Function to get personalized workout suggestions
+
 export const getWorkoutSuggestions = async (userProfile) => {
   try {
     const { fitnessLevel, fitnessGoals, limitations, preferredWorkoutDuration, equipmentAvailable } = userProfile;

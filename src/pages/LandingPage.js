@@ -69,7 +69,7 @@ function LandingPage() {
     }
   ];
 
-  // Feature data
+  
   const features = [
     {
       icon: "📱",
@@ -239,7 +239,6 @@ function LandingPage() {
         >
           <motion.h2 variants={itemVariants}>Key Features</motion.h2>
           
-          {/* Feature Cards */}
           <div className='feature-row'>
             {features.map((feature, index) => (
               <motion.div 
@@ -262,7 +261,7 @@ function LandingPage() {
             ))}
           </div>
           
-          {/* Success Stories Section */}
+          
           <motion.h2 
             variants={itemVariants}
             initial={{ x: -50, opacity: 0 }}
@@ -313,7 +312,7 @@ function LandingPage() {
             ))}
           </div>
           
-          {/* Activity Cards */}
+          
           <motion.h2 
             variants={itemVariants}
             initial={{ x: -50, opacity: 0 }}

@@ -28,7 +28,7 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Fetch all notifications
+  
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!currentUser) return;
@@ -49,7 +49,7 @@ const Notifications = () => {
     fetchNotifications();
   }, [currentUser]);
   
-  // Mark a notification as read
+  
   const handleMarkAsRead = async (notificationId) => {
     try {
       await markNotificationAsRead(notificationId);
@@ -61,7 +61,7 @@ const Notifications = () => {
     }
   };
   
-  // Mark all notifications as read
+  
   const handleMarkAllAsRead = async () => {
     if (!currentUser || notifications.length === 0) return;
     
@@ -73,7 +73,7 @@ const Notifications = () => {
     }
   };
   
-  // Get icon based on notification type
+  
   const getNotificationIcon = (notification) => {
     switch (notification.type) {
       case NOTIFICATION_TYPES.STREAK_MILESTONE:
@@ -93,7 +93,7 @@ const Notifications = () => {
     }
   };
   
-  // Count unread notifications
+  
   const unreadCount = notifications.filter(n => !n.read).length;
   
   return (
