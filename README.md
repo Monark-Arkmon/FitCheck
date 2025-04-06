@@ -1,6 +1,22 @@
-# FitCheck
+# Total number of members in the team - 
+4
 
-FitCheck is a real-time fitness tracking app that encourages daily activity by using random check-ins during user-specified time periods.
+# Name of your project - 
+FitCheck
+
+# Have you used any Google technologies? (Please mention the names) - 
+Firebase
+
+# Have you used the Google Gemini API? (Yes/No) - 
+Yes
+
+# Describe the problem you identified that could exist in the year 2080. (Max 300 words) - 
+By the year 2080, automation and AI advancements may drastically reduce physical activity in daily life. With most jobs becoming desk-based or fully remote, and virtual environments replacing real-world interaction, humans risk entering a prolonged state of sedentary behavior. This lifestyle shift could result in declining baseline fitness, rising chronic illnesses, and deteriorating mental health. As movement becomes optional, motivation to stay active may vanish, especially without daily structure or in-person encouragement. The future's convenience could ironically come at the cost of our health—unless we rethink how to naturally embed fitness into an increasingly digital lifestyle.
+
+# Describe your proposed solution to that problem. (Max 300 words) - 
+Our web app, FitCheck, inspires users to move more—even if it’s just a stretch or a walk. It sends random daily “fit check-ins” nudging people to log any movement, reinforcing that every step counts. A community-driven feed of real, unfiltered moments replaces the pressure of perfection, boosting motivation through relatability. With seamless integration into wearables or AR lenses, posting is instant and low-effort. FitCheck includes offline modes, small-space workouts, and health-based rewards, making it inclusive. It also supports mental wellness by celebrating rest days equally. In 2080, FitCheck redefines fitness—not as performance, but as presence, consistency, and connection.
+
+# Give a brief summary of your code. (Max 300 words) - 
 
 ## Features
 
@@ -156,3 +172,6 @@ This project is licensed under the MIT License
 - [Gemini AI](https://ai.google.dev/)
 - [React](https://reactjs.org/)
 - [Styled Components](https://styled-components.com/)
+
+
+
