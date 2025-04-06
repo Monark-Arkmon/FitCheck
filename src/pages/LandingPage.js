@@ -5,12 +5,11 @@ import { motion } from "framer-motion";
 import { useTheme } from '../contexts/ThemeContext';
 
 import heroImage from "../assets/hero-image.jpg";
-import activityImage1 from "../assets/hero-image.jpg";
-import activityImage2 from "../assets/hero-image.jpg";
-import activityImage3 from "../assets/hero-image.jpg";
-import activityImage4 from "../assets/hero-image.jpg";
+import activityImage1 from "../assets/yoga.jpg";
+import activityImage2 from "../assets/running.jpg";
+import activityImage3 from "../assets/bench.jpg";
+import activityImage4 from "../assets/cycling.jpg";
 
-// Temporarily using Unsplash images for users
 const userImage1 = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
 const userImage2 = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
 const userImage3 = "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
