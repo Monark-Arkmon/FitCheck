@@ -308,12 +308,12 @@ export const requestNotificationPermission = async () => {
   }
 };
 
-// Function to save FCM token to user document
+
 export const saveUserToken = async (userId, token) => {
   try {
     const userRef = doc(db, 'users', userId);
     
-    // Check if user exists
+    
     const userDoc = await getDoc(userRef);
     
     if (userDoc.exists()) {
@@ -337,7 +337,7 @@ export const saveUserToken = async (userId, token) => {
   }
 };
 
-// Function to schedule a random notification within user's preferred time slot
+
 export const scheduleRandomNotification = async (userId) => {
   try {
     const userRef = doc(db, 'users', userId);
@@ -350,30 +350,30 @@ export const scheduleRandomNotification = async (userId) => {
     const userData = userSnap.data();
     const { notificationStartTime, notificationEndTime } = userData.preferences;
     
-    // Parse time strings into hours and minutes
+    
     const [startHour, startMinute] = notificationStartTime.split(':').map(Number);
     const [endHour, endMinute] = notificationEndTime.split(':').map(Number);
     
-    // Calculate start and end times in minutes since midnight
+    
     const startTimeInMinutes = startHour * 60 + startMinute;
     const endTimeInMinutes = endHour * 60 + endMinute;
     
-    // Generate a random time within the specified range
+    
     const randomTimeInMinutes = Math.floor(
       Math.random() * (endTimeInMinutes - startTimeInMinutes) + startTimeInMinutes
     );
     
-    // Convert back to hours and minutes
+    
     const randomHour = Math.floor(randomTimeInMinutes / 60);
     const randomMinute = randomTimeInMinutes % 60;
     
-    // Format for storage
+    
     const formattedRandomTime = `${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}`;
     
-    // Store the next notification time
+    
     await updateDoc(userRef, {
       nextCheckInTime: formattedRandomTime,
-      lastScheduledDate: new Date().toISOString().split('T')[0] // Store current date in YYYY-MM-DD format
+      lastScheduledDate: new Date().toISOString().split('T')[0] 
     });
     
     return formattedRandomTime;

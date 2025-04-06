@@ -14,7 +14,7 @@ import {
 import '../styles/PageStyles.css';
 import '../styles/CheckInSettings.css';
 
-// Material UI Icons
+
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
@@ -54,10 +54,10 @@ const CheckInSettings = () => {
       try {
         setLoading(true);
         
-        // Get notification permissions
+        
         const permissionStatus = Notification.permission;
         
-        // Get user preferences
+        
         const userPrefs = await getCheckInPreferences(currentUser.uid);
         const notificationPrefs = await getNotificationPreferences(currentUser.uid);
         
@@ -92,7 +92,7 @@ const CheckInSettings = () => {
       [name]: value
     }));
     
-    // Reset saved status if changes are made
+    
     if (saved) setSaved(false);
   };
   
@@ -101,13 +101,13 @@ const CheckInSettings = () => {
       const newDays = [...prev.daysOfWeek];
       
       if (newDays.includes(day)) {
-        // Remove the day
+        
         return {
           ...prev,
           daysOfWeek: newDays.filter(d => d !== day)
         };
       } else {
-        // Add the day
+        
         return {
           ...prev,
           daysOfWeek: [...newDays, day].sort()
@@ -115,7 +115,7 @@ const CheckInSettings = () => {
       }
     });
     
-    // Reset saved status if changes are made
+   
     if (saved) setSaved(false);
   };
   
@@ -129,7 +129,7 @@ const CheckInSettings = () => {
           permission: 'granted'
         }));
         
-        // Enable notifications
+       
         await enableNotifications(currentUser.uid);
         
         setNotificationStatus(prev => ({
@@ -146,7 +146,7 @@ const CheckInSettings = () => {
   const toggleNotifications = async () => {
     try {
       if (notificationStatus.enabled) {
-        // Disable notifications
+        
         await disableNotifications(currentUser.uid);
         
         setNotificationStatus(prev => ({
@@ -154,7 +154,7 @@ const CheckInSettings = () => {
           enabled: false
         }));
       } else {
-        // Enable notifications
+        
         if (notificationStatus.permission !== 'granted') {
           await requestPermission();
         } else {
@@ -173,7 +173,7 @@ const CheckInSettings = () => {
   };
   
   const validatePreferences = () => {
-    // Check if start time is before end time
+    
     const start = new Date(`2000-01-01T${preferences.startTime}`);
     const end = new Date(`2000-01-01T${preferences.endTime}`);
     
