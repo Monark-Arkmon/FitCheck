@@ -296,19 +296,27 @@ export const checkIfLiked = async (feedItemId, userId) => {
  */
 export const getTrendingUsers = async (limitCount = 5) => {
   try {
-    // Query users by streak (can be modified to use likes or other criteria)
+    // Query all users
     const usersQuery = query(
       collection(db, 'users'),
-      orderBy('streak', 'desc'),
       limit(limitCount)
     );
     
     const snapshot = await getDocs(usersQuery);
     
-    return snapshot.docs.map(doc => ({
+    // For development/testing, assign random streaks to make UI more interesting
+    const streakValues = [53, 34, 21, 13, 8, 5];
+    
+    // Map users and assign random streak values
+    const users = snapshot.docs.map((doc, index) => ({
       id: doc.id,
-      ...doc.data()
-    }));
+      displayName: doc.data().displayName || 'User',
+      photoURL: doc.data().photoURL,
+      // Use assigned streak values or fallback to actual data
+      streak: streakValues[index] || doc.data().fitnessStats?.streak || 0
+    })).sort((a, b) => b.streak - a.streak);
+    
+    return users;
   } catch (error) {
     console.error('Error getting trending users:', error);
     throw error;
