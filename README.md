@@ -26,9 +26,9 @@ Our web app, FitCheck, inspires users to move more—even if it’s just a stret
 - **Diary Dashboard**: View your personal check-in history and stats
 - **Social Feed**: Browse global check-ins from other users
 - **Streak Feature**: Track consecutive days of fitness activity
-- **Leaderboard**: See trending users with the longest streaks
+- **Trending**: See trending users with the longest streaks
 - **AI Assistant**: Chat with Gemini-powered fitness coach
-- **Social Interactions**: Like posts and follow other users
+- **Social Interactions**: Like posts and comment on other users posts
 
 ## Tech Stack
 
@@ -56,7 +56,7 @@ Our web app, FitCheck, inspires users to move more—even if it’s just a stret
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/fitcheck.git
+git clone https://github.com/Monark-Arkmon/fitcheck.git
 cd fitcheck
 ```
 
@@ -80,37 +80,13 @@ npm install
 6. Set up Gemini API:
    - Get an API key from [Google AI Studio](https://makersuite.google.com/)
 
-### Git Setup
-
-Before pushing to a Git repository, ensure you:
-
-1. Have properly configured `.gitignore` to exclude sensitive files:
-   - `.env` file with API keys
-   - `serviceAccountKey.json` with Firebase credentials
-
-2. Double-check that no sensitive credentials are committed:
-```bash
-git status
-```
-
-3. Initialize Git repository (if not already done):
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-```
-
-4. Add a remote repository:
-```bash
-git remote add origin https://github.com/yourusername/fitcheck.git
-git push -u origin main
-```
 
 ### Running the Application
 
-For development (runs both frontend and backend concurrently):
+For development :
 ```bash
-npm run dev
+nodeserver.js
+npm start
 ```
 
 For production:
@@ -119,9 +95,6 @@ npm run build
 npm run server
 ```
 
-## Deployment
-
-The app is configured for deployment to platforms like Heroku, Vercel, or Firebase Hosting.
 
 ### Firebase Deployment
 
@@ -151,9 +124,10 @@ fitcheck/
 │   ├── components/      # React components
 │   │   ├── auth/        # Authentication components
 │   │   ├── dashboard/   # Dashboard components
-│   │   ├── feed/        # Feed components
+│   │   ├── social/      # like/comment components
 │   │   ├── fitness/     # Fitness check-in components
-│   │   └── chat/        # AI chat components
+|   │   ├── profile/     # Profile drop down components
+│   │   └── navbar/      # navbar components
 │   ├── context/         # React context providers
 │   ├── pages/           # Page components
 │   ├── services/        # API services
@@ -171,7 +145,7 @@ This project is licensed under the MIT License
 - [Firebase](https://firebase.google.com/)
 - [Gemini AI](https://ai.google.dev/)
 - [React](https://reactjs.org/)
-- [Styled Components](https://styled-components.com/)
+
 
 
 
